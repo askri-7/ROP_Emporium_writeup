@@ -12,14 +12,9 @@ Buffer overflow in `pwnme()` function. Overflow the buffer and call `ret2win()` 
 
 ![Binary Checksec](./.assets/01_checksec.png)
 
-- No stack canary
-- NX enabled  
-- PIE disabled
-- 68 symbols available
-
 Key findings:
-- `ret2win` function exists at `0x400756`
-- We can read symbols with ELF
+-PIE disabled
+-partial RELRO
 
 ---
 
@@ -27,10 +22,10 @@ Key findings:
 
 ![Symbols](./.assets/02_symbols.png)
 
-Using `objdump -t`, we find all function addresses:
+Using `nm ret2win, we find all function addresses:
 - `pwnme` at `0x4006e8` (vulnerable function)
 - `ret2win` at `0x400756` (target function)
-- `_start` at `0x4005b0`
+- `main` at `0x400697`
 
 ---
 
@@ -42,7 +37,7 @@ The `pwnme()` function:
 - Allocates 32 bytes local buffer (`sub rsp,0x20`)
 - Reads 0x38 (56) bytes via `read()` 
 - **Overflow: 56 bytes into 32-byte buffer = 24 byte overflow**
-- Plus 8 bytes saved RBP = **40 byte offset to RIP**
+
 
 ---
 
@@ -50,18 +45,16 @@ The `pwnme()` function:
 
 ![RSP Memory](./.assets/04_stack.png)
 
-Using cyclic pattern to crash and find exact offset:
+Using pwndbg, we inspected the stack after feeding AAAA to the binary.
 ```
 Offset = 40 bytes
 ```
-
-Once we control RIP at offset 40, we can hijack execution.
 
 ---
 
 ## Step 5: Target Function
 
-![ret2win disassembly](./.assets/05_ret2win_disasm.png)
+![ret2win disassembly](./.assets/05_ret2win_disass.png)
 
 The `ret2win()` function:
 - Calls `puts()` 
@@ -73,6 +66,7 @@ Address: `0x400756`
 ---
 
 ## Step 6: First Attempt - FAILS ❌
+![result](./.assets/09_noflag.png)
 
 Direct jump to `ret2win` without RET gadget:
 
@@ -86,20 +80,22 @@ Payload: [40 bytes padding] + [ret2win address]
 - After `pwnme()` returns, RSP is misaligned
 - `system()` in PLT uses `movaps xmm0, [rsp]`
 - `movaps` requires `RSP % 16 == 0`
-- Misaligned RSP = crash ❌
+- Misaligned RSP = crash 
 
 ---
 
 ## Step 7: Find RET Gadget
 
-![ROP Gadgets](./.assets/06_rop_gadgets.png)
+![ROP Gadgets](./.assets/06_ropgadget.png)
 
 Found simple gadgets:
 ```
 0x40053e: ret
 ```
+![ROP Gadgets](./.assets/07_retgadget.png)
 
 This RET gadget will fix alignment by popping one extra value from stack.
+rsp = rsp + 8
 
 ---
 
@@ -121,7 +117,7 @@ When RET gadget executes:
 
 ## Step 9: Success! Flag Captured ✅
 
-![Flag Output](./.assets/08_flag_success.png)
+![Flag Output](./.assets/08_flag.png)
 
 ```
 Thank you!
