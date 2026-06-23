@@ -101,7 +101,6 @@ rsp = rsp + 8
 
 ## Step 8: Working Payload with RET Gadget
 
-![Exploit Sent](./.assets/07_payload_sent.png)
 
 Corrected payload structure:
 ```
@@ -115,7 +114,7 @@ When RET gadget executes:
 
 ---
 
-## Step 9: Success! Flag Captured ✅
+## Step 9: Success! Flag Captured ** ✓
 
 ![Flag Output](./.assets/08_flag.png)
 
