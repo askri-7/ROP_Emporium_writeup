@@ -1,5 +1,7 @@
 # ROP ret2win - Writeup
 
+---
+
 ## Challenge Overview
 
 Buffer overflow in `pwnme()` function. Overflow the buffer and call `ret2win()` to get the flag.
@@ -8,7 +10,7 @@ Buffer overflow in `pwnme()` function. Overflow the buffer and call `ret2win()` 
 
 ## Step 1: Binary Analysis
 
-![Binary Checksec](IMAGE_1_CHECKSEC.png)
+![Binary Checksec](./.assets/01_checksec.png)
 
 - No stack canary
 - NX enabled  
@@ -23,7 +25,7 @@ Key findings:
 
 ## Step 2: Symbol Extraction
 
-![Symbols](IMAGE_2_SYMBOLS.png)
+![Symbols](./.assets/02_symbols.png)
 
 Using `objdump -t`, we find all function addresses:
 - `pwnme` at `0x4006e8` (vulnerable function)
@@ -34,7 +36,7 @@ Using `objdump -t`, we find all function addresses:
 
 ## Step 3: Vulnerable Function Analysis
 
-![Disassembly pwnme](IMAGE_5_PWNME.png)
+![Disassembly pwnme](./.assets/03_pwnme_disass.png)
 
 The `pwnme()` function:
 - Allocates 32 bytes local buffer (`sub rsp,0x20`)
@@ -46,7 +48,7 @@ The `pwnme()` function:
 
 ## Step 4: Find Offset
 
-![RSP Memory](IMAGE_3_MEMORY.png)
+![RSP Memory](./.assets/04_stack.png)
 
 Using cyclic pattern to crash and find exact offset:
 ```
@@ -59,7 +61,7 @@ Once we control RIP at offset 40, we can hijack execution.
 
 ## Step 5: Target Function
 
-![ret2win disassembly](IMAGE_4_RET2WIN.png)
+![ret2win disassembly](./.assets/05_ret2win_disasm.png)
 
 The `ret2win()` function:
 - Calls `puts()` 
@@ -90,7 +92,7 @@ Payload: [40 bytes padding] + [ret2win address]
 
 ## Step 7: Find RET Gadget
 
-![ROP Gadgets](IMAGE_6_GADGETS.png)
+![ROP Gadgets](./.assets/06_rop_gadgets.png)
 
 Found simple gadgets:
 ```
@@ -103,7 +105,7 @@ This RET gadget will fix alignment by popping one extra value from stack.
 
 ## Step 8: Working Payload with RET Gadget
 
-![Exploit Sent](IMAGE_8_EXPLOIT.png)
+![Exploit Sent](./.assets/07_payload_sent.png)
 
 Corrected payload structure:
 ```
@@ -119,7 +121,7 @@ When RET gadget executes:
 
 ## Step 9: Success! Flag Captured ✅
 
-![Flag Output](IMAGE_8_SUCCESS.png)
+![Flag Output](./.assets/08_flag_success.png)
 
 ```
 Thank you!
