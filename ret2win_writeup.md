@@ -65,7 +65,7 @@ Address: `0x400756`
 
 ---
 
-## Step 6: First Attempt - FAILS ❌
+## Step 6: First Attempt - FAILS 
 ![result](./.assets/09_noflag.png)
 
 Direct jump to `ret2win` without RET gadget:
